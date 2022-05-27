@@ -1,12 +1,26 @@
-# 基于端到端的音频处理工具espnet的文本转语音模型的TensorRT部署与加速
+# 基于espnet的文本转语音模型的TensorRT部署与加速
 
 本仓库是 “英伟达TensorRT加速AI推理 Hackathon 2022 —— Transformer模型优化赛” 的 “edvince” 队伍的复赛仓库。
 
-**复赛目标**：使用TensorRT部署及加速espnet的文本转语音模型。
+## 总述
 
-重要链接：
-1. 天池比赛官方入口：https://tianchi.aliyun.com/competition/entrance/531953/introduction
-2. 英伟达官方仓库：https://github.com/NVIDIA/trt-samples-for-hackathon-cn
-3. espnet模型官方仓库：https://github.com/espnet/espnet
+使用TensorRT部署及加速espnet的文本转语音模型。
 
-PS（复赛选题考虑）：初赛做的是指定的wenet模型的语音转文本的trt加速，因此复赛我选择做语音识别中另一个重要的工作espnet的文本转语音，刚好搭个对。
+ - 原始模型：[espnet](https://github.com/espnet/espnet)
+ - 优化效果：暂无
+ - 运行步骤：暂无
+
+## 原始模型
+
+### 模型简介
+
+ - 用途以及效果：
+    - 用途：[espnet](https://github.com/espnet/espnet)是一个端到端的语音处理工具链，与[wenet](https://github.com/wenet-e2e/wenet)类似，不同的是wenet官方提供了完善的部署流程，而espnet没有，因此对espnet进行部署和加速是十分有必要的。本工作主要部署加速espnet的文本转语音(Text2Speech, 缩写tts)。
+    - 效果：文本：abc
+
+./xxx.wav
+
+ - 业界应用情况：
+
+### 模型优化的难点
+

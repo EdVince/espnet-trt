@@ -4,3 +4,7 @@
 
 ##### NonZero修复
 1. espnet2/gan_tts/vits/transform.py的unconstrained_rational_quadratic_spline
+
+##### IO修复
+1. 切掉两个无用的输出节点
+2. 把输入节点text_length改成从图内获取

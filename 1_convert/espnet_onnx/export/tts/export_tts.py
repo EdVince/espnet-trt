@@ -103,6 +103,11 @@ class TTSModelExport:
         else:
             dummy_input = model.get_dummy_inputs()
 
+
+        print('#################################### 导出前推理一次')
+        fake_out = model(*dummy_input)
+
+        print('####################################导出')
         torch.onnx.export(
             model,
             dummy_input,

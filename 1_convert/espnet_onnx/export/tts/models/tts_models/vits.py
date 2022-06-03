@@ -262,6 +262,7 @@ class OnnxVITSModel(nn.Module, AbsModel):
     def get_dummy_inputs(self):
         text = torch.LongTensor([32,18,14,13,10,6,32,4,2,5,4,28,17,66,7,4,12,6,2,17,47,4,13,3,9,2,20,2,3,5,27,2,4,15,3,6,21,24,7,4,27,60,10,6,15,8,21,47,4,13,5,2,32,12,3,22,21,2,3,6,26,18,10,2,43,2,3,33])
         text_length = torch.LongTensor([text.size(0)])
+
         feats = torch.randn(5, self.model.generator.posterior_encoder.input_conv.in_channels) \
             if self.use_teacher_forcing else None
         feats_length = torch.LongTensor([5]) if feats is not None else None

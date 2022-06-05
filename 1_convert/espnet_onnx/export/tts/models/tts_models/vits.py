@@ -160,10 +160,10 @@ class OnnxVITSGenerator(nn.Module):
                     g=g,
                     inverse=True,
                     noise_scale=noise_scale_dur,
+                    text_lengths=text_lengths[0],
                 )
                 w = torch.exp(logw) * x_mask * alpha
-                # dur = torch.ceil(w)
-                dur = (w+1.0).long().float()
+                dur = torch.ceil(w)
             y_lengths = torch.clamp_min(torch.sum(dur, [1, 2]), 1).long()
             y_mask = 1 - \
                 make_pad_mask(y_lengths).unsqueeze(1).type(torch.float32)

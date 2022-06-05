@@ -110,6 +110,7 @@ class StochasticDurationPredictor(torch.nn.Module):
         g: Optional[torch.Tensor] = None,
         inverse: bool = False,
         noise_scale: float = 1.0,
+        text_lengths: int = 68,
     ) -> torch.Tensor:
         """Calculate forward propagation.
 
@@ -177,6 +178,7 @@ class StochasticDurationPredictor(torch.nn.Module):
         else:
             flows = list(reversed(self.flows))
             flows = flows[:-2] + [flows[-1]]  # remove a useless vflow
+
             # z = (
             #     torch.randn(
             #         x.size(0),
@@ -185,9 +187,14 @@ class StochasticDurationPredictor(torch.nn.Module):
             #     ).to(device=x.device, dtype=x.dtype)
             #     * noise_scale
             # )
-            z = torch.zeros(x.size(0),2,x.size(2)).to(device=x.device, dtype=x.dtype)
+
+            # z = torch.zeros(x.size(0),2,x.size(2)).to(device=x.device, dtype=x.dtype)
+
+            z = torch.zeros(1,2,text_lengths).to(device=x.device, dtype=x.dtype)
+            
             for flow in flows:
                 z = flow(z, x_mask, g=x, inverse=inverse)
             z0, z1 = z.split(1, 1)
             logw = z0
+            print(x.size(),logw.size())
             return logw

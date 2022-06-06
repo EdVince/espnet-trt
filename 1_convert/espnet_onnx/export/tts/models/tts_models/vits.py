@@ -190,7 +190,8 @@ class OnnxVITSGenerator(nn.Module):
             z = self.flow(z_p, y_mask, g=g, inverse=True)
             wav = self.decoder((z * y_mask)[:, :, :max_len], g=g)
 
-        return wav.squeeze(1), attn.squeeze(1), dur.squeeze(1), 256*y_lengths
+        # return wav.squeeze(1), attn.squeeze(1), dur.squeeze(1), 256*y_lengths
+        return wav.squeeze(1), 256*y_lengths
 
 
 class OnnxVITSModel(nn.Module, AbsModel):
@@ -247,7 +248,7 @@ class OnnxVITSModel(nn.Module, AbsModel):
                 use_teacher_forcing=self.use_teacher_forcing,
             )
         else:
-            wav, att_w, dur, y_length = self.generator(
+            wav, y_length = self.generator(
                 text=text,
                 text_lengths=text_lengths,
                 sids=sids,
@@ -259,7 +260,7 @@ class OnnxVITSModel(nn.Module, AbsModel):
                 alpha=self.alpha,
                 max_len=self.max_len,
             )
-        return dict(wav=wav.view(-1), att_w=att_w[0], duration=dur[0], y_length=y_length)
+        return dict(wav=wav.view(-1), y_length=y_length)
 
     def get_dummy_inputs(self):
         text = torch.LongTensor([32,18,14,13,10,6,32,4,2,5,4,28,17,66,7,4,12,6,2,17,47,4,13,3,9,2,20,2,3,5,27,2,4,15,3,6,21,24,7,4,27,60,10,6,15,8,21,47,4,13,5,2,32,12,3,22,21,2,3,6,26,18,10,2,43,2,3,33])
@@ -287,16 +288,13 @@ class OnnxVITSModel(nn.Module, AbsModel):
         return ['text', 'text_length', 'feats', 'feats_length', 'sids', 'spembs', 'lids', 'duration']
 
     def get_output_names(self):
-        return ['wav', 'att_w', 'dur', 'y_length']
+        return ['wav', 'y_length']
 
     def get_dynamic_axes(self):
         return {
             'text': {0: 'text_length'},
             'feats': {0: 'feats_length'},
             'wav': {0: 'wav_length'},
-            'att_w': {0: 'att_w_feat_length',
-                      1: 'att_w_text_length'},
-            'dur': {0: 'dur_length'}
         }
 
     def get_model_config(self, path):

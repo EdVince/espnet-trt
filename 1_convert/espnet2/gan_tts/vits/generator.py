@@ -563,8 +563,10 @@ class VITSGenerator(torch.nn.Module):
         b, _, t_y, t_x = mask.shape
         cum_dur = torch.cumsum(dur, -1)
         cum_dur_flat = cum_dur.view(b * t_x)
+
         # path = torch.arange(t_y, dtype=dur.dtype, device=dur.device)
-        path = torch.arange(t_y, device=dur.device).float()
+        path = torch.arange(int(t_y), device=dur.device).float()
+
         path = path.unsqueeze(0) < cum_dur_flat.unsqueeze(1)
         path = path.view(b, t_x, t_y).to(dtype=mask.dtype)
         # path will be like (t_x = 3, t_y = 5):

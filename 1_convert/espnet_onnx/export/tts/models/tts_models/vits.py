@@ -190,7 +190,7 @@ class OnnxVITSGenerator(nn.Module):
             z = self.flow(z_p, y_mask, g=g, inverse=True)
             wav = self.decoder((z * y_mask)[:, :, :max_len], g=g)
 
-        return wav.squeeze(1), attn.squeeze(1), dur.squeeze(1), 256*y_lengths
+        return wav.squeeze(1), attn.squeeze(1), dur.squeeze(1), y_lengths
 
 
 class OnnxVITSModel(nn.Module, AbsModel):

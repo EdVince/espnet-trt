@@ -196,5 +196,5 @@ class StochasticDurationPredictor(torch.nn.Module):
                 z = flow(z, x_mask, g=x, inverse=inverse)
             z0, z1 = z.split(1, 1)
             logw = z0
-            print(x.size(),logw.size())
+
             return logw

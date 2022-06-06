@@ -156,7 +156,6 @@ class HiFiGANGenerator(torch.nn.Module):
                 cs += self.blocks[i * self.num_blocks + j](c)
             c = cs / self.num_blocks
         c = self.output_conv(c)
-
         return c
 
     def reset_parameters(self):

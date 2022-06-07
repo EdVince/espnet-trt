@@ -5,25 +5,16 @@ import onnx
 import onnx_graphsurgeon as gs
 
 onnxFile = "kan-bayashi/ljspeech_vits/full/tts_model.onnx"
-onnxSurgeonFile = "./tts_model.onnx"
+onnxSurgeonFile = "./baseline.onnx"
 graph = gs.import_onnx(onnx.load(onnxFile))
-
-# clean useless output
-graph.outputs = graph.outputs[:1]
 
 # merge input
 all_nodes = graph.nodes
 shape_node = None
-length_node1 = None
-length_node2 = None
 unsqueeze_node = None
 for node in all_nodes:
     if node.name == 'Gather_30':
         shape_node = node
-    if node.name == 'Sub_7':
-        length_node1 = node
-    if node.name == 'ReduceMax_5':
-        length_node2 = node
     if node.name == 'Unsqueeze_11':
         unsqueeze_node = node.copy()
         unsqueeze_node.inputs.append(node.inputs[1])

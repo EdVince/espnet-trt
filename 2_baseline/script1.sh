@@ -1,0 +1,1 @@
+polygraphy surgeon sanitize --fold-constants /root/trt2022_espnet/espnet-trt/1_convert/baseline.onnx -o baseline.onnx

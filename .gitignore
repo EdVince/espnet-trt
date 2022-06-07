@@ -4,6 +4,11 @@
 *.engine
 *.plan
 *.zip
+*.npy
+*.npz
+*.bin
+*.wav
+*.txt
 */__pycache__/*
 *__pycache__*
 */__pycache__

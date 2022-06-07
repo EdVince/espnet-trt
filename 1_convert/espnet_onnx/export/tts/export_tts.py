@@ -78,12 +78,7 @@ class TTSModelExport:
 
     def export_from_pretrained(self, tag_name: str = None, zip_file: str = None, quantize: bool = False):
         assert check_argument_types()
-        if ((tag_name is not None) and (zip_file is not None)) \
-                or ((tag_name is None) and (zip_file is None)):
-            raise RuntimeError(
-                'You should specify value for one of ["tag_name", "zip_file"]')
-        _t = tag_name if tag_name is not None else zip_file
-        model = Text2Speech.from_pretrained(_t)
+        model = Text2Speech.from_pretrained(zip_file)
         self.export(model, tag_name, quantize)
 
     def set_export_config(self, **kwargs):

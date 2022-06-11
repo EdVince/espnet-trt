@@ -1,0 +1,3 @@
+polygraphy run /root/trt2022_espnet/espnet-trt/2_baseline/baseline.onnx --onnxrt \
+    --input-shapes test:[64] \
+    --onnx-outputs input.23 input.35 input.55 input.75 input.87 input.107 input.127 input.139 input.159 input.179 input.191 input.211 input.231 input.243 input.263 input.283 input.295 input.315 input.327 input.335 input.347 input.355 input.367 input.375 input.395 input.403 input.415 input.423 input.435 input.443 input.463 input.471 input.483 input.491 input.503 input.511 input.531 input.539 input.551 input.559 input.571 input.579

@@ -28,13 +28,11 @@ tableHead = \
 tl: Text Length
 lt: Latency (ms)
 tp: throughput (word/s)
-aw: maximum of absolute difference of wav
-rw: median of relative difference of wav
 gl: ground truth of wav length
 pl: prediction of wav length
-----+--------+---------+---------+---------+---------+---------+---------
-  tl|      lt|       tp|       aw|       rw|       gl|   pd len|   Check
-----+--------+---------+---------+---------+---------+---------+---------
+----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
+  tl|      lt|       tp|  max abs| mean abs|  med abs|  max rel| mean rel|  med rel|   pd len|   Check
+----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
 """
 
 def check(a, b, weak=False, epsilon = 1e-5):
@@ -44,10 +42,10 @@ def check(a, b, weak=False, epsilon = 1e-5):
     else:
         res = np.all( a == b )
 
-    diff0 = np.max(np.abs(a - b))
-    diff1 = np.median(np.abs(a - b) / (np.abs(b) + epsilon))
+    _abs_ = np.abs(a - b)
+    _rel_ = np.abs(a - b) / (np.abs(b) + epsilon)
 
-    return res,diff0,diff1
+    return res,np.max(_abs_),np.mean(_abs_),np.median(_abs_),np.max(_rel_),np.mean(_rel_),np.median(_rel_)
 
 #-------------------------------------------------------------------------------
 logger = trt.Logger(trt.Logger.ERROR)
@@ -121,16 +119,16 @@ with open(ttsScoreFile, 'w') as f:
         if gt_len == pd_len:
             crash = False
             check0 = check(bufferH[indexTTSOut][:gt_len],ioData['wav'][:gt_len],True,5e-5)
-            generateWAV(bufferH[indexTTSOut][:gt_len],'/root/trt2022_espnet/espnet-trt/0_data/trt_test{}.wav'.format(numFile))
+            generateWAV(bufferH[indexTTSOut][:gt_len],'/root/trt2022_espnet/espnet-trt/0_data/trt_fp16_test{}.wav'.format(numFile))
         else:
             check0 = check(bufferH[indexTTSOut][:min(gt_len,pd_len)],ioData['wav'][:min(gt_len,pd_len)],True,5e-5)
 
-        string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
+        string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
                                                 textLength,
                                                 timePerInference,
                                                 textLength/timePerInference*1000,
-                                                check0[1],
-                                                check0[2],
+                                                check0[1],check0[2],check0[3],
+                                                check0[4],check0[5],check0[6],
                                                 gt_len,
                                                 pd_len)
         print(string+",   %s"%("Crash" if crash is True else " "))

@@ -9,22 +9,22 @@ from cuda import cudart
 import tensorrt as trt
 import wave
 
-
 dataFilePath = "/root/trt2022_espnet/espnet-trt/0_data/"
-ttsPlanFile  = "/root/trt2022_espnet/espnet-trt/3_layernorm-plugin/model-layernorm.plan"
-ttsScoreFile = "/root/trt2022_espnet/espnet-trt/3_layernorm-plugin/Score.txt"
-soFileList = glob("./*.so")
+ttsPlanFile  = "/root/trt2022_espnet/espnet-trt/4_fp16/baseline-cut-fp16.plan"
+ttsScoreFile = "/root/trt2022_espnet/espnet-trt/4_fp16/Score.txt"
 
 tableHead = \
 """
 tl: Text Length
 lt: Latency (ms)
 tp: throughput (word/s)
+aw: maximum of absolute difference of wav
+rw: median of relative difference of wav
 gl: ground truth of wav length
 pl: prediction of wav length
-----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
-  tl|      lt|       tp|  max abs| mean abs|  med abs|  max rel| mean rel|  med rel|   pd len|   Check
-----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
+----+--------+---------+---------+---------+---------+---------+---------
+  tl|      lt|       tp|       aw|       rw|       gl|   pd len|   Check
+----+--------+---------+---------+---------+---------+---------+---------
 """
 
 def check(a, b, weak=False, epsilon = 1e-5):
@@ -34,21 +34,14 @@ def check(a, b, weak=False, epsilon = 1e-5):
     else:
         res = np.all( a == b )
 
-    _abs_ = np.abs(a - b)
-    _rel_ = np.abs(a - b) / (np.abs(b) + epsilon)
+    diff0 = np.max(np.abs(a - b))
+    diff1 = np.median(np.abs(a - b) / (np.abs(b) + epsilon))
 
-    return res,np.max(_abs_),np.mean(_abs_),np.median(_abs_),np.max(_rel_),np.mean(_rel_),np.median(_rel_)
+    return res,diff0,diff1
 
 #-------------------------------------------------------------------------------
 logger = trt.Logger(trt.Logger.ERROR)
 trt.init_libnvinfer_plugins(logger, '')
-
-if len(soFileList) > 0:
-    print("Find Plugin %s!"%soFileList)
-else:
-    print("No Plugin!")
-for soFile in soFileList:
-    ctypes.cdll.LoadLibrary(soFile)
 
 #-------------------------------------------------------------------------------
 with open(ttsScoreFile, 'w') as f:
@@ -108,29 +101,31 @@ with open(ttsScoreFile, 'w') as f:
         t1 = time_ns()
         timePerInference = (t1-t0)/1000/1000/30
 
-        indexTTSOut = engine.get_binding_index('wav')
+        # indexTTSOut = engine.get_binding_index('wav')
         indexTTSOutLens = engine.get_binding_index('y_length')
 
         gt_len = ioData['y_length'][0]
         pd_len = bufferH[indexTTSOutLens][0]
 
-        crash = True
-        if gt_len == pd_len:
-            crash = False
-            check0 = check(bufferH[indexTTSOut][:gt_len],ioData['wav'][:gt_len],True,5e-5)
-        else:
-            check0 = check(bufferH[indexTTSOut][:min(gt_len,pd_len)],ioData['wav'][:min(gt_len,pd_len)],True,5e-5)
+        print(pd_len,gt_len,abs(pd_len-gt_len)/gt_len)
 
-        string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
-                                                textLength,
-                                                timePerInference,
-                                                textLength/timePerInference*1000,
-                                                check0[1],check0[2],check0[3],
-                                                check0[4],check0[5],check0[6],
-                                                gt_len,
-                                                pd_len)
-        print(string+",   %s"%("Crash" if crash is True else " "))
-        f.write(string + "\n")
+        # crash = True
+        # if gt_len == pd_len:
+        #     crash = False
+        #     check0 = check(bufferH[indexTTSOut][:gt_len],ioData['wav'][:gt_len],True,5e-5)
+        # else:
+        #     check0 = check(bufferH[indexTTSOut][:min(gt_len,pd_len)],ioData['wav'][:min(gt_len,pd_len)],True,5e-5)
+
+        # string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
+        #                                         textLength,
+        #                                         timePerInference,
+        #                                         textLength/timePerInference*1000,
+        #                                         check0[1],
+        #                                         check0[2],
+        #                                         gt_len,
+        #                                         pd_len)
+        # print(string+",   %s"%("Crash" if crash is True else " "))
+        # f.write(string + "\n")
 
         for i in range(nInput + nOutput):                
             cudart.cudaFree(bufferD[i])

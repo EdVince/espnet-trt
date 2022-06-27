@@ -11,20 +11,32 @@ import wave
 
 
 dataFilePath = "/root/trt2022_espnet/espnet-trt/0_data/"
-ttsPlanFile  = "/root/trt2022_espnet/espnet-trt/3_layernorm-plugin/model-layernorm.plan"
-ttsScoreFile = "/root/trt2022_espnet/espnet-trt/3_layernorm-plugin/Score.txt"
+ttsPlanFile  = "/root/trt2022_espnet/espnet-trt/4_fp16/model-fp16.plan"
+ttsScoreFile = "/root/trt2022_espnet/espnet-trt/4_fp16/Score.txt"
 soFileList = glob("./*.so")
+
+def generateWAV(wav, wavfile):
+    waveDataBytes = wav / np.abs(wav).max()
+    waveDataBytes = 32768.0 * waveDataBytes
+    waveDataBytes = waveDataBytes.astype(np.int16).tolist()
+    waveDataBytes = [i.to_bytes(2, byteorder='little', signed=True) for i in waveDataBytes]
+    waveFile=wave.open(wavfile,'wb')
+    waveFile.setparams((1,2,22050,len(waveDataBytes),'NONE','Tsinghua'))
+    waveFile.writeframes(b''.join(waveDataBytes))
+    waveFile.close()
 
 tableHead = \
 """
 tl: Text Length
 lt: Latency (ms)
 tp: throughput (word/s)
+aw: maximum of absolute difference of wav
+rw: median of relative difference of wav
 gl: ground truth of wav length
 pl: prediction of wav length
-----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
-  tl|      lt|       tp|  max abs| mean abs|  med abs|  max rel| mean rel|  med rel|   pd len|   Check
-----+--------+---------+---------+---------+---------+---------+---------+---------+---------+---------
+----+--------+---------+---------+---------+---------+---------+---------
+  tl|      lt|       tp|       aw|       rw|       gl|   pd len|   Check
+----+--------+---------+---------+---------+---------+---------+---------
 """
 
 def check(a, b, weak=False, epsilon = 1e-5):
@@ -34,10 +46,10 @@ def check(a, b, weak=False, epsilon = 1e-5):
     else:
         res = np.all( a == b )
 
-    _abs_ = np.abs(a - b)
-    _rel_ = np.abs(a - b) / (np.abs(b) + epsilon)
+    diff0 = np.max(np.abs(a - b))
+    diff1 = np.median(np.abs(a - b) / (np.abs(b) + epsilon))
 
-    return res,np.max(_abs_),np.mean(_abs_),np.median(_abs_),np.max(_rel_),np.mean(_rel_),np.median(_rel_)
+    return res,diff0,diff1
 
 #-------------------------------------------------------------------------------
 logger = trt.Logger(trt.Logger.ERROR)
@@ -121,12 +133,14 @@ with open(ttsScoreFile, 'w') as f:
         else:
             check0 = check(bufferH[indexTTSOut][:min(gt_len,pd_len)],ioData['wav'][:min(gt_len,pd_len)],True,5e-5)
 
-        string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
+        generateWAV(bufferH[indexTTSOut][:pd_len],'/root/trt2022_espnet/espnet-trt/0_data/trt_fp16_test{}.wav'.format(numFile))
+
+        string = "%4d,%8.3f,%9.3e,%9.3e,%9.3e,%9d,%9d"%(
                                                 textLength,
                                                 timePerInference,
                                                 textLength/timePerInference*1000,
-                                                check0[1],check0[2],check0[3],
-                                                check0[4],check0[5],check0[6],
+                                                check0[1],
+                                                check0[2],
                                                 gt_len,
                                                 pd_len)
         print(string+",   %s"%("Crash" if crash is True else " "))
